@@ -61,6 +61,31 @@ function MiniCalendar({ reservations, month, year, onPrev, onNext }) {
           <div className="w-2 h-2 rounded-sm bg-white/5 border border-gray-700" /> Today
         </div>
       </div>
+      <div className="mt-4 pt-3 border-t border-[#1F2937]">
+        <div className="flex items-center justify-between mb-2">
+           <span className="text-[10px] font-mono uppercase text-gray-400 font-bold">Tension du Marché</span>
+           <span className="text-[10px] font-mono text-orbit-warning">Haute saison</span>
+        </div>
+        <div className="h-8 w-full relative">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+            <polyline
+              fill="none"
+              stroke="#F59E0B"
+              strokeWidth="3"
+              points="0,80 10,75 20,60 30,85 40,40 50,20 60,10 70,30 80,60 90,70 100,50"
+              vectorEffect="non-scaling-stroke"
+            />
+            <polygon
+              fill="rgba(245, 158, 11, 0.1)"
+              points="0,100 0,80 10,75 20,60 30,85 40,40 50,20 60,10 70,30 80,60 90,70 100,50 100,100"
+            />
+          </svg>
+        </div>
+        <div className="flex justify-between mt-1 text-[8px] font-mono text-gray-600">
+          <span>Début mois</span>
+          <span>Fin mois</span>
+        </div>
+      </div>
     </div>
   );
 }

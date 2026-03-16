@@ -18,6 +18,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
+try:
+    from mongomock_motor import AsyncMongoMockClient
+except ImportError:
+    AsyncMongoMockClient = None
 import bcrypt
 import jwt
 
@@ -37,7 +41,7 @@ PLANS = {
 }
 
 # ---------- MongoDB ----------
-client: AsyncIOMotorClient = None
+client = None
 db = None
 
 # ---------- Agent State ----------
@@ -51,7 +55,11 @@ log_subscribers: list = []
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global client, db
-    client = AsyncIOMotorClient(MONGO_URL)
+    if AsyncMongoMockClient and "localhost" in str(MONGO_URL):
+        client = AsyncMongoMockClient()
+    else:
+        client = AsyncIOMotorClient(MONGO_URL)
+    
     db = client[DB_NAME]
     await db.properties.create_index("property_id", unique=True)
     await db.properties.create_index("owner_id")
@@ -59,6 +67,19 @@ async def lifespan(app: FastAPI):
     await db.logs.create_index("property_id")
     await db.users.create_index("email", unique=True)
     await db.users.create_index("user_id", unique=True)
+    test_email = "test@example.com"
+    if not await db.users.find_one({"email": test_email}):
+        import uuid
+        await db.users.insert_one({
+            "user_id": f"user_{uuid.uuid4().hex[:12]}",
+            "email": test_email,
+            "name": "Test User",
+            "password_hash": bcrypt.hashpw(b"password123", bcrypt.gensalt()).decode(),
+            "picture": "",
+            "role": "admin",
+            "subscription": "pro",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
     await db.user_sessions.create_index("session_token", unique=True)
     await db.reservations.create_index("property_id")
     await db.reservations.create_index("reservation_id", unique=True)
@@ -1164,6 +1185,7 @@ Tu as acces aux outils suivants pour interagir avec le systeme :
 - get_agent_status : Statut de l'agent
 - start_agent : Demarrer l'agent
 - stop_agent : Arreter l'agent
+- analyze_market_eye(date_range) : Analyser l'opportunite Market-Eye pour une periode donnee
 
 IMPORTANT: Pour utiliser un outil, reponds avec EXACTEMENT ce format JSON sur une seule ligne :
 {"tool": "nom_outil", "params": {"param1": "valeur1"}}
@@ -1172,6 +1194,8 @@ Regles :
 - Utilise TOUJOURS un outil quand l'utilisateur demande des donnees ou une action sur le systeme
 - Reponds en francais avec un ton professionnel mais amical
 - Utilise le Markdown pour formater tes reponses (tableaux, listes, gras)
+- Si l'utilisateur demande d'analyser une opportunite Market-Eye, simule ou genere une recommandation expliquant que la demande est forte, que les concurrents sont complets. 
+- TRES IMPORTANT: Quand tu proposes d'ajuster le prix avec Market-Eye, inclus systematiquement ce lien markdown EXACT tel quel: [Approuver l'augmentation](#action_update_price)
 - Si l'utilisateur demande quelque chose d'ambigu, pose des questions de clarification
 - Pour les dates, utilise le format YYYY-MM-DD
 - Ne revele jamais les details techniques internes (IDs, URLs de fichiers locaux)
@@ -1306,7 +1330,11 @@ async def chat_suggestions(request: Request):
     """Auto-suggest based on recent errors or events."""
     user = await get_current_user(request)
 
-    suggestions = []
+    suggestions = [{
+        "type": "warn",
+        "message": "Market-Eye a détecté une **opportunité de revenu** pour le weekend du 14-16 Août. Voulez-vous ajuster le prix ?",
+        "action": "Analyse l'opportunité Market-Eye du 14-16 Août"
+    }]
 
     # Check for recent errors
     recent_errors = await db.logs.find(

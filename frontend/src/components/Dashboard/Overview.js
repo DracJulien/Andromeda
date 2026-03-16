@@ -110,6 +110,40 @@ export default function Overview({ api }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-orbit-panel border border-yellow-900/50 rounded-sm overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent pointer-events-none" />
+          <div className="flex items-center justify-between px-4 py-3 border-b border-yellow-900/50">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+              </span>
+              <span className="text-xs font-mono uppercase tracking-wider text-yellow-500 font-bold">Orbit Market-Eye</span>
+            </div>
+            <div className="bg-yellow-500/20 text-yellow-400 text-[10px] font-mono px-2 py-0.5 rounded-sm uppercase border border-yellow-500/30">
+              Opportunité de Revenu
+            </div>
+          </div>
+          <div className="p-4 space-y-3 relative z-10">
+            <h3 className="text-white font-heading text-lg">Ajustement de Prix Recommandé</h3>
+            <p className="text-gray-400 text-sm font-mono leading-relaxed">
+              La demande dans votre quartier est très forte le weekend du <span className="text-yellow-400 font-bold">14-16 Août</span>. Vos concurrents majeurs sont déjà à <span className="text-orbit-error">100% de remplissage</span>.
+            </p>
+            <div className="bg-black/50 p-3 rounded-sm border border-[#1F2937] flex items-center justify-between mt-2">
+               <div>
+                 <span className="text-gray-500 text-xs font-mono uppercase block mb-1">Prix Actuel</span>
+                 <span className="text-gray-300 font-bold text-lg">120€</span>
+               </div>
+               <div className="text-gray-600">→</div>
+               <div className="text-right">
+                 <span className="text-yellow-500/80 text-xs font-mono uppercase block mb-1">Recommandé</span>
+                 <span className="text-yellow-400 font-bold text-lg">150€</span>
+               </div>
+            </div>
+            <p className="text-[10px] font-mono text-gray-500 pt-2">Demandez à l'agent d'approuver cette modification dans le chat.</p>
+          </div>
+        </div>
+
         <div className="lg:col-span-2 bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1F2937]">
             <Activity size={14} className="text-orbit-blue" />

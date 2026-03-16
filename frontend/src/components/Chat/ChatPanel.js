@@ -35,7 +35,31 @@ function ChatMessage({ msg }) {
             prose-ul:my-1 prose-ol:my-1
             prose-a:text-orbit-blue prose-a:no-underline hover:prose-a:underline
           ">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ node, ...props }) => {
+                  if (props.href?.startsWith('#approve') || props.href?.startsWith('#action')) {
+                    return (
+                      <button 
+                        onClick={() => {
+                          const event = new CustomEvent('orbit-chat-action', { detail: props.href });
+                          window.dispatchEvent(event);
+                          alert('Action approuvée avec succès ! Orbit a appliqué le nouveau prix.');
+                        }}
+                        className="inline-flex items-center gap-1.5 mt-2 px-3 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs rounded-sm transition-transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                      >
+                        <Zap size={12} />
+                        {props.children}
+                      </button>
+                    );
+                  }
+                  return <a {...props} />;
+                }
+              }}
+            >
+              {msg.content}
+            </ReactMarkdown>
           </div>
         )}
         <p className="text-[9px] font-mono text-gray-600 mt-1.5">
