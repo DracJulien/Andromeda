@@ -63,6 +63,7 @@ async def lifespan(app: FastAPI):
     await db.reservations.create_index("property_id")
     await db.reservations.create_index("reservation_id", unique=True)
     await db.payment_transactions.create_index("session_id")
+    await db.chat_messages.create_index([("user_id", 1), ("created_at", -1)])
     state = await db.agent_state.find_one({"_id": "global"})
     if not state:
         await db.agent_state.insert_one({
@@ -143,6 +144,9 @@ class UserSettingsBody(BaseModel):
 class CheckoutBody(BaseModel):
     plan_id: str
     origin_url: str
+
+class ChatMessageBody(BaseModel):
+    message: str
 
 
 # ============================================================
@@ -692,7 +696,7 @@ async def stream_logs():
                     log = await asyncio.wait_for(q.get(), timeout=30)
                     yield f"data: {json.dumps(log)}\n\n"
                 except asyncio.TimeoutError:
-                    yield f": keepalive\n\n"
+                    yield ": keepalive\n\n"
         except asyncio.CancelledError:
             pass
         finally:
@@ -928,3 +932,416 @@ async def agent_loop():
             await asyncio.sleep(30)
     agent_running = False
     await db.agent_state.update_one({"_id": "global"}, {"$set": {"running": False}})
+
+
+
+# ============================================================
+#  AI CHAT ASSISTANT (Function Calling)
+# ============================================================
+
+ASSISTANT_TOOLS = {
+    "list_properties": {
+        "description": "Liste toutes les proprietes de l'utilisateur avec leur statut et derniere synchronisation.",
+        "params": [],
+    },
+    "get_property_details": {
+        "description": "Obtenir les details d'une propriete specifique par nom ou ID (dates reservees, statut, URLs).",
+        "params": ["property_name_or_id"],
+    },
+    "trigger_property_sync": {
+        "description": "Declencher la synchronisation d'un calendrier pour une propriete specifique.",
+        "params": ["property_name_or_id"],
+    },
+    "list_reservations": {
+        "description": "Lister les reservations, avec filtres optionnels par propriete, guest, dates.",
+        "params": ["property_name", "guest_name", "date_from", "date_to"],
+    },
+    "create_reservation": {
+        "description": "Creer une nouvelle reservation manuelle pour une propriete.",
+        "params": ["property_name", "guest_name", "check_in", "check_out", "source", "notes"],
+    },
+    "cancel_reservation": {
+        "description": "Annuler/supprimer une reservation par nom de guest ou ID.",
+        "params": ["guest_name_or_id"],
+    },
+    "get_recent_logs": {
+        "description": "Consulter les logs recents de l'agent (erreurs, synchros, etc.).",
+        "params": ["level_filter", "limit"],
+    },
+    "get_system_health": {
+        "description": "Obtenir l'etat de sante du systeme (MongoDB, agent, nombre de proprietes).",
+        "params": [],
+    },
+    "get_agent_status": {
+        "description": "Verifier le statut de l'agent autonome (actif/inactif, derniere execution).",
+        "params": [],
+    },
+    "start_agent": {
+        "description": "Demarrer l'agent autonome de synchronisation.",
+        "params": [],
+    },
+    "stop_agent": {
+        "description": "Arreter l'agent autonome de synchronisation.",
+        "params": [],
+    },
+}
+
+
+async def execute_tool(tool_name: str, params: dict, user_id: str) -> str:
+    """Execute a tool call and return the result as a string."""
+    global agent_task, agent_running
+    try:
+        if tool_name == "list_properties":
+            docs = await db.properties.find({"owner_id": user_id}, {"_id": 0}).to_list(50)
+            if not docs:
+                docs = await db.properties.find({}, {"_id": 0}).to_list(50)
+            if not docs:
+                return "Aucune propriete enregistree. L'utilisateur peut en ajouter depuis la page Proprietes."
+            result = []
+            for p in docs:
+                result.append(f"- **{p['name']}** | Statut: {p['status']} | Derniere sync: {p.get('last_sync', 'Jamais')} | Dates reservees: {len(p.get('booked_dates', []))}")
+            return "\n".join(result)
+
+        elif tool_name == "get_property_details":
+            search = params.get("property_name_or_id", "")
+            doc = await db.properties.find_one(
+                {"$or": [{"name": {"$regex": search, "$options": "i"}}, {"property_id": search}]},
+                {"_id": 0}
+            )
+            if not doc:
+                return f"Propriete '{search}' non trouvee."
+            dates = doc.get("booked_dates", [])
+            return (f"**{doc['name']}**\n"
+                    f"- ID: `{doc['property_id']}`\n"
+                    f"- Statut: {doc['status']}\n"
+                    f"- Booking URL: {doc.get('booking_url', 'Non defini')}\n"
+                    f"- Airbnb URL: {doc.get('airbnb_url', 'Non defini')}\n"
+                    f"- Derniere sync: {doc.get('last_sync', 'Jamais')}\n"
+                    f"- Dates reservees ({len(dates)}): {', '.join(dates[:10])}{'...' if len(dates) > 10 else ''}")
+
+        elif tool_name == "trigger_property_sync":
+            search = params.get("property_name_or_id", "")
+            doc = await db.properties.find_one(
+                {"$or": [{"name": {"$regex": search, "$options": "i"}}, {"property_id": search}]},
+                {"_id": 0}
+            )
+            if not doc:
+                return f"Propriete '{search}' non trouvee. Impossible de lancer la sync."
+            asyncio.create_task(run_sync_for_property(doc["property_id"]))
+            return f"Synchronisation lancee pour **{doc['name']}**. Vous pouvez suivre la progression dans la Console Live."
+
+        elif tool_name == "list_reservations":
+            query = {}
+            if params.get("property_name"):
+                prop = await db.properties.find_one({"name": {"$regex": params["property_name"], "$options": "i"}}, {"_id": 0})
+                if prop:
+                    query["property_id"] = prop["property_id"]
+            if params.get("guest_name"):
+                query["guest_name"] = {"$regex": params["guest_name"], "$options": "i"}
+            docs = await db.reservations.find(query, {"_id": 0}).sort("check_in", 1).to_list(20)
+            if not docs:
+                return "Aucune reservation trouvee avec ces criteres."
+            result = ["| Guest | Propriete | Check-in | Check-out | Source | Statut |", "|---|---|---|---|---|---|"]
+            for r in docs:
+                result.append(f"| {r['guest_name']} | {r.get('property_name', '-')} | {r['check_in']} | {r['check_out']} | {r.get('source', '-')} | {r.get('status', '-')} |")
+            return "\n".join(result)
+
+        elif tool_name == "create_reservation":
+            prop_name = params.get("property_name", "")
+            prop = await db.properties.find_one({"name": {"$regex": prop_name, "$options": "i"}}, {"_id": 0})
+            if not prop:
+                return f"Propriete '{prop_name}' non trouvee. Verifiez le nom exact."
+            res = {
+                "reservation_id": str(uuid.uuid4()),
+                "property_id": prop["property_id"],
+                "property_name": prop["name"],
+                "guest_name": params.get("guest_name", "Inconnu"),
+                "check_in": params.get("check_in", ""),
+                "check_out": params.get("check_out", ""),
+                "source": params.get("source", "Chat IA"),
+                "status": "Confirmed",
+                "notes": params.get("notes", "Cree via l'assistant IA"),
+                "created_by": user_id,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            await db.reservations.insert_one({**res, "_id": res["reservation_id"]})
+            return f"Reservation creee avec succes :\n- Guest: **{res['guest_name']}**\n- Propriete: **{prop['name']}**\n- Du {res['check_in']} au {res['check_out']}\n- Source: {res['source']}"
+
+        elif tool_name == "cancel_reservation":
+            search = params.get("guest_name_or_id", "")
+            doc = await db.reservations.find_one(
+                {"$or": [{"guest_name": {"$regex": search, "$options": "i"}}, {"reservation_id": search}]},
+                {"_id": 0}
+            )
+            if not doc:
+                return f"Reservation pour '{search}' non trouvee."
+            await db.reservations.update_one({"reservation_id": doc["reservation_id"]}, {"$set": {"status": "Cancelled"}})
+            return f"Reservation annulee : **{doc['guest_name']}** du {doc['check_in']} au {doc['check_out']} ({doc.get('property_name', '-')})"
+
+        elif tool_name == "get_recent_logs":
+            query = {}
+            level = params.get("level_filter", "")
+            if level and level.upper() in ("INFO", "WARN", "ERROR"):
+                query["level"] = level.upper()
+            limit = min(int(params.get("limit", 10)), 20)
+            docs = await db.logs.find(query, {"_id": 0}).sort("timestamp", -1).limit(limit).to_list(limit)
+            if not docs:
+                return "Aucun log trouve."
+            result = []
+            for l in docs:
+                ts = l.get("timestamp", "")[:19]
+                result.append(f"- `[{ts}]` **[{l['level']}]** {l['action']}: {l['message']}")
+            return "\n".join(result)
+
+        elif tool_name == "get_system_health":
+            try:
+                await client.admin.command("ping")
+                mongo_ok = True
+            except Exception:
+                mongo_ok = False
+            state = await db.agent_state.find_one({"_id": "global"}, {"_id": 0})
+            prop_count = await db.properties.count_documents({})
+            res_count = await db.reservations.count_documents({})
+            online = await db.properties.count_documents({"status": "Online"})
+            errors = await db.properties.count_documents({"status": "Error"})
+            return (f"**Sante du systeme Orbit**\n"
+                    f"- MongoDB: {'Connecte' if mongo_ok else 'Deconnecte'}\n"
+                    f"- Agent: {'Actif' if state and state.get('running') else 'Inactif'}\n"
+                    f"- Proprietes: {prop_count} (Online: {online}, Erreurs: {errors})\n"
+                    f"- Reservations: {res_count}\n"
+                    f"- Derniere execution agent: {state.get('last_run', 'Jamais') if state else 'Jamais'}\n"
+                    f"- Intervalle polling: {state.get('polling_interval', 900) if state else 900}s")
+
+        elif tool_name == "get_agent_status":
+            state = await db.agent_state.find_one({"_id": "global"}, {"_id": 0})
+            if not state:
+                return "Etat de l'agent non disponible."
+            return (f"**Agent Orbit**\n"
+                    f"- Statut: {'Actif' if state.get('running') else 'Inactif'}\n"
+                    f"- Tache en cours: {state.get('current_task', 'Aucune')}\n"
+                    f"- Derniere execution: {state.get('last_run', 'Jamais')}\n"
+                    f"- Intervalle: {state.get('polling_interval', 900)}s")
+
+        elif tool_name == "start_agent":
+            if agent_running:
+                return "L'agent est deja en cours d'execution."
+            agent_running = True
+            await db.agent_state.update_one({"_id": "global"}, {"$set": {"running": True, "paused": False}})
+            agent_task = asyncio.create_task(agent_loop())
+            await push_log(None, "AGENT_START", "INFO", "Agent demarre via chat IA.")
+            return "Agent Orbit demarre avec succes. Il va synchroniser toutes vos proprietes."
+
+        elif tool_name == "stop_agent":
+            if not agent_running:
+                return "L'agent n'est pas en cours d'execution."
+            agent_running = False
+            if agent_task:
+                agent_task.cancel()
+                agent_task = None
+            await db.agent_state.update_one({"_id": "global"}, {"$set": {"running": False, "paused": False, "current_task": None}})
+            await push_log(None, "AGENT_STOP", "WARN", "Agent arrete via chat IA.")
+            return "Agent Orbit arrete."
+
+        else:
+            return f"Outil '{tool_name}' non reconnu."
+
+    except Exception as e:
+        return f"Erreur lors de l'execution de '{tool_name}': {str(e)}"
+
+
+SYSTEM_PROMPT = """Tu es l'assistant IA d'Orbit, une plateforme d'automatisation hoteliere de grade spatial.
+Tu aides les utilisateurs a gerer leurs proprietes, reservations, et agents de synchronisation.
+
+Tu as acces aux outils suivants pour interagir avec le systeme :
+- list_properties : Lister toutes les proprietes
+- get_property_details(property_name_or_id) : Details d'une propriete
+- trigger_property_sync(property_name_or_id) : Lancer une synchronisation
+- list_reservations(property_name?, guest_name?, date_from?, date_to?) : Lister les reservations
+- create_reservation(property_name, guest_name, check_in, check_out, source?, notes?) : Creer une reservation
+- cancel_reservation(guest_name_or_id) : Annuler une reservation
+- get_recent_logs(level_filter?, limit?) : Consulter les logs
+- get_system_health : Etat de sante du systeme
+- get_agent_status : Statut de l'agent
+- start_agent : Demarrer l'agent
+- stop_agent : Arreter l'agent
+
+IMPORTANT: Pour utiliser un outil, reponds avec EXACTEMENT ce format JSON sur une seule ligne :
+{"tool": "nom_outil", "params": {"param1": "valeur1"}}
+
+Regles :
+- Utilise TOUJOURS un outil quand l'utilisateur demande des donnees ou une action sur le systeme
+- Reponds en francais avec un ton professionnel mais amical
+- Utilise le Markdown pour formater tes reponses (tableaux, listes, gras)
+- Si l'utilisateur demande quelque chose d'ambigu, pose des questions de clarification
+- Pour les dates, utilise le format YYYY-MM-DD
+- Ne revele jamais les details techniques internes (IDs, URLs de fichiers locaux)
+- Sois concis mais utile"""
+
+
+async def process_chat_message(user_message: str, user_id: str, conversation_history: list) -> str:
+    """Process a chat message, potentially calling tools, and return the response."""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+    # Build conversation context
+    history_text = ""
+    for msg in conversation_history[-10:]:
+        role = "Utilisateur" if msg["role"] == "user" else "Assistant"
+        history_text += f"{role}: {msg['content']}\n"
+
+    chat = LlmChat(
+        api_key=EMERGENT_LLM_KEY,
+        session_id=f"orbit-chat-{user_id}",
+        system_message=SYSTEM_PROMPT,
+    ).with_model("gemini", "gemini-2.5-flash")
+
+    full_prompt = f"{history_text}Utilisateur: {user_message}"
+    msg = UserMessage(text=full_prompt)
+    response = await chat.send_message(msg)
+
+    # Check if the response contains a tool call
+    clean_response = response.strip()
+    if '{"tool"' in clean_response:
+        try:
+            # Extract JSON from response
+            json_start = clean_response.index('{"tool"')
+            json_end = clean_response.index('}', json_start + 1)
+            # Handle nested braces for params
+            bracket_count = 0
+            for idx in range(json_start, len(clean_response)):
+                if clean_response[idx] == '{':
+                    bracket_count += 1
+                elif clean_response[idx] == '}':
+                    bracket_count -= 1
+                    if bracket_count == 0:
+                        json_end = idx
+                        break
+            tool_json = clean_response[json_start:json_end + 1]
+            tool_call = json.loads(tool_json)
+            tool_name = tool_call.get("tool", "")
+            tool_params = tool_call.get("params", {})
+
+            # Execute the tool
+            tool_result = await execute_tool(tool_name, tool_params, user_id)
+
+            # Get the AI to interpret the result
+            interpret_chat = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"orbit-chat-interpret-{uuid.uuid4().hex[:8]}",
+                system_message="Tu es l'assistant Orbit. L'utilisateur a pose une question et tu as appele un outil. Voici le resultat de l'outil. Reponds a l'utilisateur en francais de maniere claire et utile en utilisant le Markdown. Ne mentionne pas que tu as utilise un outil.",
+            ).with_model("gemini", "gemini-2.5-flash")
+
+            interpret_msg = UserMessage(text=f"Question de l'utilisateur: {user_message}\n\nResultat de l'outil '{tool_name}':\n{tool_result}\n\nReponds a l'utilisateur:")
+            final_response = await interpret_chat.send_message(interpret_msg)
+            return final_response.strip()
+
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return clean_response
+
+
+# ---- Chat API Endpoints ----
+
+@app.post("/api/chat/send")
+async def chat_send(body: ChatMessageBody, request: Request):
+    user = await get_current_user(request)
+    user_id = user["user_id"]
+    user_message = body.message.strip()
+    if not user_message:
+        raise HTTPException(400, "Empty message")
+
+    # Store user message
+    user_msg_doc = {
+        "message_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "role": "user",
+        "content": user_message,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.chat_messages.insert_one({**user_msg_doc, "_id": user_msg_doc["message_id"]})
+
+    # Get recent conversation history
+    history_docs = await db.chat_messages.find(
+        {"user_id": user_id}, {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    history = list(reversed(history_docs))
+
+    # Process with AI
+    try:
+        ai_response = await process_chat_message(user_message, user_id, history)
+    except Exception as e:
+        ai_response = f"Desole, j'ai rencontre une erreur : {str(e)}"
+
+    # Store AI response
+    ai_msg_doc = {
+        "message_id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "role": "assistant",
+        "content": ai_response,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.chat_messages.insert_one({**ai_msg_doc, "_id": ai_msg_doc["message_id"]})
+
+    return {"message": ai_response, "message_id": ai_msg_doc["message_id"]}
+
+
+@app.get("/api/chat/history")
+async def chat_history(request: Request, limit: int = Query(50, le=200)):
+    user = await get_current_user(request)
+    docs = await db.chat_messages.find(
+        {"user_id": user["user_id"]}, {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    return list(reversed(docs))
+
+
+@app.delete("/api/chat/history")
+async def clear_chat_history(request: Request):
+    user = await get_current_user(request)
+    await db.chat_messages.delete_many({"user_id": user["user_id"]})
+    return {"cleared": True}
+
+
+@app.get("/api/chat/suggestions")
+async def chat_suggestions(request: Request):
+    """Auto-suggest based on recent errors or events."""
+    user = await get_current_user(request)
+
+    suggestions = []
+
+    # Check for recent errors
+    recent_errors = await db.logs.find(
+        {"level": "ERROR"}, {"_id": 0}
+    ).sort("timestamp", -1).limit(3).to_list(3)
+
+    for err in recent_errors:
+        prop_id = err.get("property_id")
+        if prop_id:
+            prop = await db.properties.find_one({"property_id": prop_id}, {"_id": 0})
+            prop_name = prop["name"] if prop else prop_id[:8]
+            suggestions.append({
+                "type": "error",
+                "message": f"J'ai remarque un blocage sur la synchro de **{prop_name}**. Voulez-vous que je tente une reconnexion ?",
+                "action": f"Relance la synchronisation pour {prop_name}",
+            })
+
+    # Check for properties never synced
+    never_synced = await db.properties.find(
+        {"last_sync": None}, {"_id": 0}
+    ).to_list(5)
+    for p in never_synced:
+        suggestions.append({
+            "type": "info",
+            "message": f"La propriete **{p['name']}** n'a jamais ete synchronisee. Voulez-vous lancer une premiere sync ?",
+            "action": f"Lance la synchronisation pour {p['name']}",
+        })
+
+    # Agent status
+    state = await db.agent_state.find_one({"_id": "global"}, {"_id": 0})
+    if state and not state.get("running"):
+        suggestions.append({
+            "type": "warn",
+            "message": "L'agent Orbit est actuellement inactif. Souhaitez-vous le demarrer pour synchroniser automatiquement vos calendriers ?",
+            "action": "Demarre l'agent Orbit",
+        })
+
+    return suggestions[:3]

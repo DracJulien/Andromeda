@@ -15,6 +15,7 @@ import ReservationsPage from './components/Reservations/ReservationsPage';
 import UsersPage from './components/Users/UsersPage';
 import UserSettingsPage from './components/UserSettings/UserSettingsPage';
 import SubscriptionPage from './components/Subscription/SubscriptionPage';
+import ChatPanel from './components/Chat/ChatPanel';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -98,6 +99,7 @@ function AppLayout() {
           <RouteContent />
         </main>
       </div>
+      <ChatPanel />
     </div>
   );
 }

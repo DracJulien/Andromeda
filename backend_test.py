@@ -472,12 +472,186 @@ class OrbitAPITester:
             self.log(f"✅ Found {len(response)} screenshots", "PASS")
         return success
 
+    # ============================================================
+    #  CHAT AI ASSISTANT TESTS (NEW IN ITERATION 4)
+    # ============================================================
+
+    def test_chat_send_without_auth(self):
+        """Test POST /api/chat/send returns 401 without auth"""
+        success, response = self.run_test(
+            "Chat Send (No Auth)",
+            "POST",
+            "api/chat/send",
+            401,
+            data={"message": "Test message"}
+        )
+        return success
+
+    def test_chat_send_with_auth(self):
+        """Test POST /api/chat/send works with auth"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Chat Send (Auth)",
+            "POST",
+            "api/chat/send",
+            200,
+            data={"message": "Bonjour, pouvez-vous m'aider?"},
+            use_auth=True
+        )
+        if success and 'message' in response and 'message_id' in response:
+            self.log(f"✅ AI Response received: {response['message'][:100]}...", "PASS")
+        return success
+
+    def test_chat_send_system_status_french(self):
+        """Test POST /api/chat/send with 'Quel est le statut du systeme' returns health info"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Chat Send - System Status (French)",
+            "POST",
+            "api/chat/send",
+            200,
+            data={"message": "Quel est le statut du systeme"},
+            use_auth=True
+        )
+        if success and 'message' in response:
+            # Check if response contains health/system status info
+            response_text = response['message'].lower()
+            health_indicators = ['mongodb', 'agent', 'proprietes', 'sante', 'systeme', 'orbit']
+            found_indicators = [indicator for indicator in health_indicators if indicator in response_text]
+            if found_indicators:
+                self.log(f"✅ Health info found in response: {found_indicators}", "PASS")
+            else:
+                self.log(f"⚠️ Response may not contain health info: {response['message'][:200]}", "WARN")
+        return success
+
+    def test_chat_send_properties_french(self):
+        """Test POST /api/chat/send with 'Montre-moi mes proprietes' returns property list"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Chat Send - Properties (French)",
+            "POST",
+            "api/chat/send",
+            200,
+            data={"message": "Montre-moi mes proprietes"},
+            use_auth=True
+        )
+        if success and 'message' in response:
+            # Check if response contains property information
+            response_text = response['message'].lower()
+            property_indicators = ['propriete', 'statut', 'sync', 'hotel', 'booking', 'airbnb']
+            found_indicators = [indicator for indicator in property_indicators if indicator in response_text]
+            if found_indicators:
+                self.log(f"✅ Property info found in response: {found_indicators}", "PASS")
+            else:
+                self.log(f"⚠️ Response may not contain property info: {response['message'][:200]}", "WARN")
+        return success
+
+    def test_chat_history_without_auth(self):
+        """Test GET /api/chat/history returns 401 without auth"""
+        success, response = self.run_test(
+            "Chat History (No Auth)",
+            "GET",
+            "api/chat/history",
+            401
+        )
+        return success
+
+    def test_chat_history_with_auth(self):
+        """Test GET /api/chat/history returns conversation history"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Chat History (Auth)",
+            "GET",
+            "api/chat/history?limit=50",
+            200,
+            use_auth=True
+        )
+        if success and isinstance(response, list):
+            self.log(f"✅ Found {len(response)} chat messages in history", "PASS")
+            # Check if any messages have proper structure
+            if response:
+                msg = response[0]
+                if 'role' in msg and 'content' in msg and 'created_at' in msg:
+                    self.log("✅ Chat history has proper message structure", "PASS")
+        return success
+
+    def test_chat_suggestions_without_auth(self):
+        """Test GET /api/chat/suggestions returns 401 without auth"""
+        success, response = self.run_test(
+            "Chat Suggestions (No Auth)",
+            "GET",
+            "api/chat/suggestions",
+            401
+        )
+        return success
+
+    def test_chat_suggestions_with_auth(self):
+        """Test GET /api/chat/suggestions returns auto-suggestions based on system state"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Chat Suggestions (Auth)",
+            "GET",
+            "api/chat/suggestions",
+            200,
+            use_auth=True
+        )
+        if success and isinstance(response, list):
+            self.log(f"✅ Found {len(response)} chat suggestions", "PASS")
+            # Check if suggestions have proper structure
+            if response:
+                suggestion = response[0]
+                if 'type' in suggestion and 'message' in suggestion and 'action' in suggestion:
+                    self.log("✅ Chat suggestions have proper structure", "PASS")
+        return success
+
+    def test_clear_chat_history_without_auth(self):
+        """Test DELETE /api/chat/history returns 401 without auth"""
+        success, response = self.run_test(
+            "Clear Chat History (No Auth)",
+            "DELETE",
+            "api/chat/history",
+            401
+        )
+        return success
+
+    def test_clear_chat_history_with_auth(self):
+        """Test DELETE /api/chat/history clears history"""
+        if not self.session_token:
+            self.log("❌ No session token available", "SKIP")
+            return False
+            
+        success, response = self.run_test(
+            "Clear Chat History (Auth)",
+            "DELETE",
+            "api/chat/history",
+            200,
+            use_auth=True
+        )
+        if success and response.get('cleared') is True:
+            self.log("✅ Chat history cleared successfully", "PASS")
+        return success
+
 def main():
     tester = OrbitAPITester()
     
-    print("🚀 Starting Orbit API Backend Tests - Iteration 2")
-    print("Testing Auth, Users, Reservations, Subscription & Properties")
-    print("=" * 60)
+    print("🚀 Starting Orbit API Backend Tests - Iteration 4 (AI Chat Assistant)")
+    print("Testing Auth, Users, Reservations, Subscription, Properties & New Chat Features")
+    print("=" * 75)
     
     # Test all endpoints in logical order
     tests = [
@@ -498,6 +672,20 @@ def main():
         
         # Protected endpoint auth checks
         tester.test_properties_without_auth,
+        
+        # Chat endpoints without auth (should fail)
+        tester.test_chat_send_without_auth,
+        tester.test_chat_history_without_auth,
+        tester.test_chat_suggestions_without_auth,
+        tester.test_clear_chat_history_without_auth,
+        
+        # Chat endpoints with auth (should work)
+        tester.test_chat_send_with_auth,
+        tester.test_chat_send_system_status_french,
+        tester.test_chat_send_properties_french,
+        tester.test_chat_history_with_auth,
+        tester.test_chat_suggestions_with_auth,
+        tester.test_clear_chat_history_with_auth,
         
         # Properties (with auth)
         tester.test_list_properties_with_auth,
@@ -526,7 +714,7 @@ def main():
         test()
         print()  # Add spacing between tests
     
-    print("=" * 60)
+    print("=" * 75)
     print(f"📊 Backend Test Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
     if tester.tests_passed == tester.tests_run:
