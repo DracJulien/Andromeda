@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Building2, RefreshCw, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('orbit_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 export default function Overview({ api }) {
   const [health, setHealth] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -9,10 +14,11 @@ export default function Overview({ api }) {
   useEffect(() => {
     const load = async () => {
       try {
+        const h = { credentials: 'include', headers: getAuthHeaders() };
         const [hRes, lRes, pRes] = await Promise.all([
           fetch(`${api}/api/health`),
-          fetch(`${api}/api/logs?limit=8`),
-          fetch(`${api}/api/properties`),
+          fetch(`${api}/api/logs?limit=8`, h),
+          fetch(`${api}/api/properties`, h),
         ]);
         setHealth(await hRes.json());
         setLogs(await lRes.json());

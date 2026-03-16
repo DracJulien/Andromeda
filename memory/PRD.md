@@ -4,56 +4,59 @@
 Centralize multi-platform hotel availability via autonomous vision-based browser agents. Sync calendars between Booking.com and Airbnb using Playwright + Gemini Vision AI.
 
 ## Architecture
-- **Frontend**: React (CRA) + Tailwind CSS + Lucide-React icons
+- **Frontend**: React (CRA) + Tailwind CSS + Framer Motion + Lucide-React
 - **Backend**: FastAPI + MongoDB (Motor async driver)
-- **Agent Engine**: Playwright Chromium + Gemini 2.5 Flash Vision (via Emergent LLM key)
-- **Storage**: MongoDB for properties/logs/agent state, filesystem for screenshots
+- **Agent Engine**: Playwright Chromium + Gemini 2.5 Flash Vision (Emergent LLM key)
+- **Auth**: JWT sessions (email/password) + Google OAuth (Emergent Auth)
+- **Payments**: Stripe Checkout Sessions via emergentintegrations
+- **Storage**: MongoDB for all data, filesystem for screenshots
 
-## User Persona
-Single hotel property manager managing listings across Airbnb and Booking.com. Technical enough to understand agent automation, needs a reliable monitoring dashboard.
+## User Personas
+1. **Admin**: Full access - manages all properties, users, agents, subscriptions
+2. **Manager**: Manages own properties, views own logs and reservations
 
-## Core Requirements (Static)
-1. Dashboard with system health monitoring
-2. Property CRUD management
-3. Browser agent that syncs calendars (Observe -> Compare -> Act -> Validate)
-4. Live console with real-time log streaming (SSE)
-5. Proof gallery with agent screenshots
-6. Agent control (start/stop, polling interval config)
+## What's Been Implemented
 
-## What's Been Implemented (March 16, 2026)
-- Full NASA Command Center dark mode UI
-- Property management with CRUD operations
-- Real browser automation agent (Playwright + Gemini Vision)
-- Mock HTML calendars (Booking.com + Airbnb) for safe testing
-- Live Console with SSE streaming, filters, export
-- Proof Gallery with screenshot viewer dialog
-- Agent control panel (start/stop, polling config)
-- System health monitoring
-- Full observe -> compare -> act -> validate sync cycle WORKING
+### Phase 1 - MVP (March 16, 2026)
+- Full NASA Command Center dark mode dashboard
+- Property CRUD with browser automation agent
+- Real Playwright + Gemini Vision sync pipeline
+- Live Console (SSE), Proof Gallery, Agent Control
+
+### Phase 2 - Auth, Users, Reservations, Stripe (March 16, 2026)
+- Authentication (email/password + Google OAuth)
+- Role-based access (Admin/Manager)
+- User management, User settings
+- Reservations (calendar + table)
+- Stripe subscriptions (Starter/Pro/Enterprise)
+
+### Phase 3 - Cinematic Landing Page (March 16, 2026)
+- Scroll-choreographed landing at '/'
+- Star field particle background (mouse-reactive)
+- Hero with orbital animations + gradient text
+- Demo section: Booking -> Agent -> Airbnb flow visualization
+- Features: Bento grid with glassmorphism cards
+- Pricing: 3-tier cards with Pro highlighted
+- CTA: Final conversion section
+- All content in French
+- framer-motion scroll-triggered animations
+- Responsive navbar with mobile support
+- Dashboard moved to '/dashboard'
+- Auto-redirect logged-in users to dashboard
 
 ## Testing Results
-- Backend: 13/13 endpoints passing (100%)
-- Frontend: All pages and interactions verified
-- Agent pipeline: Gemini detected 11 booked dates, synced to target successfully
+- Phase 1: Backend 100%, Frontend 100%
+- Phase 2: Backend 100% (23/23), Frontend 100%
+- Phase 3: Frontend 95% (all sections render, minor session persistence fixed)
 
 ## Prioritized Backlog
-### P0 (Critical)
-- None remaining for MVP
-
 ### P1 (High)
-- Webhook/notification on sync completion or errors
-- Multi-month calendar view in UI
-- Real Airbnb/Booking.com URL support (with stealth/anti-detection)
-- 2FA/CAPTCHA handling with human-in-the-loop UI
+- Real Airbnb/Booking.com URL support with stealth
+- 2FA/CAPTCHA human-in-the-loop handling
+- Email notifications (SendGrid)
 
 ### P2 (Medium)
-- Property sync history view
-- Batch sync operations
-- Calendar conflict resolution UI
-- Custom sync rules (e.g., minimum stay blocks)
-
-### Next Tasks
-1. Add real site URL support with stealth browser profiles
-2. Build calendar diff visualization in UI
-3. Add email/webhook notifications for sync events
-4. Implement retry logic with exponential backoff for failed syncs
+- Testimonials section on landing
+- Property sync history timeline
+- Calendar conflict resolution
+- Stripe Customer Portal

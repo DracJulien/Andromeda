@@ -8,7 +8,9 @@ export default function SettingsPage({ api }) {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch(`${api}/api/agent/status`);
+      const token = localStorage.getItem('orbit_token');
+      const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch(`${api}/api/agent/status`, { credentials: 'include', headers: h });
       const data = await res.json();
       setAgentStatus(data);
       setInterval_(data.polling_interval || 900);
@@ -22,16 +24,20 @@ export default function SettingsPage({ api }) {
   }, [api]);
 
   const toggleAgent = async () => {
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}` } : {};
     const endpoint = agentStatus?.running ? 'stop' : 'start';
-    await fetch(`${api}/api/agent/${endpoint}`, { method: 'POST' });
+    await fetch(`${api}/api/agent/${endpoint}`, { method: 'POST', credentials: 'include', headers: h });
     fetchStatus();
   };
 
   const saveConfig = async () => {
     setSaving(true);
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
     await fetch(`${api}/api/agent/config`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', credentials: 'include',
+      headers: h,
       body: JSON.stringify({ polling_interval: interval }),
     });
     setSaving(false);
