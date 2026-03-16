@@ -8,13 +8,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('orbit_token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     try {
-      const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+      const res = await fetch(`${API}/api/auth/me`, {
+        credentials: 'include',
+        headers,
+      });
       if (res.ok) {
         const data = await res.json();
         setUser(data);
       } else {
         setUser(null);
+        localStorage.removeItem('orbit_token');
       }
     } catch {
       setUser(null);
