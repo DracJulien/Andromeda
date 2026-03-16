@@ -87,7 +87,7 @@ function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen bg-orbit-black text-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-orbit-bg-main text-orbit-text-main overflow-hidden light-theme">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header />

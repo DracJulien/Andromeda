@@ -54,10 +54,10 @@ export default function PropertyGrid({ api }) {
     <div data-testid="property-grid-page" className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-white">
+          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-orbit-text-main">
             Properties
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-mono">
+          <p className="text-sm text-orbit-text-dim mt-1 font-mono">
             {properties.length} registered {properties.length === 1 ? 'property' : 'properties'}
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function PropertyGrid({ api }) {
           <button
             data-testid="refresh-properties-btn"
             onClick={fetchProperties}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-sm bg-[#1F2937] text-gray-300 hover:bg-[#374151] text-sm font-medium transition-colors border border-[#374151]"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-sm bg-orbit-bg-surface text-orbit-text-main hover:bg-orbit-bg-panel text-sm font-medium transition-colors border border-orbit-border-main"
           >
             <RefreshCw size={14} />
           </button>
@@ -86,11 +86,11 @@ export default function PropertyGrid({ api }) {
         </div>
       ) : properties.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-sm bg-orbit-panel border border-[#1F2937] flex items-center justify-center mb-4">
-            <Building2 size={28} className="text-gray-600" />
+          <div className="w-16 h-16 rounded-sm bg-orbit-bg-panel border border-orbit-border-main flex items-center justify-center mb-4">
+            <Building2 size={28} className="text-orbit-text-dim opacity-50" />
           </div>
-          <p className="text-gray-400 text-sm font-medium">No properties registered</p>
-          <p className="text-gray-600 text-xs mt-1 font-mono">Add a property to begin orbital sync</p>
+          <p className="text-orbit-text-dim text-sm font-medium">No properties registered</p>
+          <p className="text-orbit-text-dim/70 text-xs mt-1 font-mono">Add a property to begin orbital sync</p>
           <button
             data-testid="add-first-property-btn"
             onClick={() => setShowAdd(true)}

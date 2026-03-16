@@ -5,25 +5,25 @@ import base64
 import json
 import hashlib
 import hmac
-import httpx
+import httpx # type: ignore
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, Any, cast
 from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Query, Request, Response, Cookie
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
-from pydantic import BaseModel, Field
-from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import FastAPI, HTTPException, Query, Request, Response, Cookie # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from fastapi.responses import FileResponse, StreamingResponse # type: ignore
+from pydantic import BaseModel, Field # type: ignore
+from motor.motor_asyncio import AsyncIOMotorClient # type: ignore
 try:
-    from mongomock_motor import AsyncMongoMockClient
+    from mongomock_motor import AsyncMongoMockClient # type: ignore
 except ImportError:
     AsyncMongoMockClient = None
-import bcrypt
-import jwt
+import bcrypt # type: ignore
+import jwt # type: ignore
 
 MONGO_URL = os.environ.get("MONGO_URL")
 DB_NAME = os.environ.get("DB_NAME")
@@ -41,8 +41,8 @@ PLANS = {
 }
 
 # ---------- MongoDB ----------
-client = None
-db = None
+client: Any = cast(Any, None)
+db: Any = cast(Any, None)
 
 # ---------- Agent State ----------
 agent_task: Optional[asyncio.Task] = None
@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI):
     if not await db.users.find_one({"email": test_email}):
         import uuid
         await db.users.insert_one({
-            "user_id": f"user_{uuid.uuid4().hex[:12]}",
+            "user_id": f"user_{uuid.uuid4().hex[:12]}", # type: ignore
             "email": test_email,
             "name": "Test User",
             "password_hash": bcrypt.hashpw(b"password123", bcrypt.gensalt()).decode(),
@@ -241,7 +241,7 @@ async def register(body: RegisterBody, response: Response):
     if existing:
         raise HTTPException(400, "Email already registered")
 
-    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    user_id = f"user_{uuid.uuid4().hex[:12]}" # type: ignore
     user = {
         "user_id": user_id,
         "email": body.email.lower(),
@@ -313,7 +313,7 @@ async def exchange_session(session_id: str, response: Response):
         await db.users.update_one({"email": email}, {"$set": {"name": name or user.get("name"), "picture": picture}})
         user_id = user["user_id"]
     else:
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        user_id = f"user_{uuid.uuid4().hex[:12]}" # type: ignore
         user = {
             "user_id": user_id,
             "email": email,
@@ -454,7 +454,7 @@ async def delete_property(property_id: str, request: Request):
 @app.get("/api/reservations")
 async def list_reservations(request: Request, property_id: Optional[str] = None):
     user = await get_current_user(request)
-    query = {}
+    query: dict[str, Any] = {}
     if property_id:
         query["property_id"] = property_id
     if user["role"] != "admin":
@@ -564,9 +564,9 @@ async def update_settings(body: UserSettingsBody, request: Request):
     if body.new_password:
         if body.current_password:
             full_user = await db.users.find_one({"user_id": user["user_id"]})
-            if full_user.get("password_hash") and not verify_password(body.current_password, full_user["password_hash"]):
+            if full_user.get("password_hash") and not verify_password(body.current_password, full_user["password_hash"]): # type: ignore
                 raise HTTPException(400, "Current password is incorrect")
-        updates["password_hash"] = hash_password(body.new_password)
+        updates["password_hash"] = hash_password(body.new_password) # type: ignore
     if updates:
         await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
     doc = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
@@ -590,7 +590,7 @@ async def create_checkout(body: CheckoutBody, request: Request):
     if plan["price"] == 0:
         raise HTTPException(400, "Starter plan is free")
 
-    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest # type: ignore
 
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}api/webhook/stripe"
@@ -631,7 +631,7 @@ async def create_checkout(body: CheckoutBody, request: Request):
 async def checkout_status(session_id: str, request: Request):
     user = await get_current_user(request)
 
-    from emergentintegrations.payments.stripe.checkout import StripeCheckout
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout # type: ignore
 
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}api/webhook/stripe"
@@ -668,7 +668,7 @@ async def stripe_webhook(request: Request):
     body = await request.body()
     sig = request.headers.get("Stripe-Signature", "")
     try:
-        from emergentintegrations.payments.stripe.checkout import StripeCheckout
+        from emergentintegrations.payments.stripe.checkout import StripeCheckout # type: ignore
         host_url = str(request.base_url).rstrip("/")
         webhook_url = f"{host_url}api/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
@@ -819,7 +819,7 @@ async def trigger_sync(property_id: str, request: Request):
 # ============================================================
 
 async def run_sync_for_property(property_id: str):
-    from playwright.async_api import async_playwright
+    from playwright.async_api import async_playwright # type: ignore
     doc = await db.properties.find_one({"property_id": property_id}, {"_id": 0})
     if not doc:
         return
@@ -839,7 +839,7 @@ async def run_sync_for_property(property_id: str):
             await page.goto(booking_url, wait_until="networkidle", timeout=30000)
             await asyncio.sleep(1)
             ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            obs_screenshot = f"observe_{property_id[:8]}_{ts}.png"
+            obs_screenshot = f"observe_{property_id[:8]}_{ts}.png" # type: ignore
             obs_path = os.path.join(screenshot_dir, obs_screenshot)
             await page.screenshot(path=obs_path, full_page=True)
             await push_log(property_id, "SCREENSHOT", "INFO", f"[{prop_name}] Source captured", screenshot_path=f"/api/screenshots/{obs_screenshot}")
@@ -866,7 +866,7 @@ async def run_sync_for_property(property_id: str):
                 except Exception as e:
                     await push_log(property_id, "BLOCK_DATE", "ERROR", f"[{prop_name}] Failed {date}: {str(e)}")
             await asyncio.sleep(1)
-            val_screenshot = f"validate_{property_id[:8]}_{ts}.png"
+            val_screenshot = f"validate_{property_id[:8]}_{ts}.png" # type: ignore
             val_path = os.path.join(screenshot_dir, val_screenshot)
             await page.screenshot(path=val_path, full_page=True)
             await push_log(property_id, "SCREENSHOT", "INFO", f"[{prop_name}] Validation captured", screenshot_path=f"/api/screenshots/{val_screenshot}")
@@ -906,12 +906,12 @@ async def run_sync_for_property(property_id: str):
 
 async def analyze_calendar_with_vision(screenshot_path: str, calendar_type: str) -> list:
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+        from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent # type: ignore
         with open(screenshot_path, "rb") as f:
             image_data = base64.b64encode(f.read()).decode("utf-8")
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
-            session_id=f"orbit-vision-{uuid.uuid4().hex[:8]}",
+            session_id=f"orbit-vision-{uuid.uuid4().hex[:8]}", # type: ignore
             system_message="You are a calendar analysis agent. Return ONLY a JSON array of date strings in YYYY-MM-DD format."
         ).with_model("gemini", "gemini-2.5-flash")
         image_content = ImageContent(image_base64=image_data)
@@ -937,7 +937,7 @@ async def agent_loop():
             properties = await db.properties.find({}, {"_id": 0}).to_list(100)
             if properties:
                 await push_log(None, "AGENT_CYCLE", "INFO", f"Syncing {len(properties)} properties")
-                for prop in properties:
+                for prop in properties: # type: ignore
                     if not agent_running:
                         break
                     await db.agent_state.update_one({"_id": "global"}, {"$set": {"current_task": prop["property_id"]}})
@@ -1204,11 +1204,11 @@ Regles :
 
 async def process_chat_message(user_message: str, user_id: str, conversation_history: list) -> str:
     """Process a chat message, potentially calling tools, and return the response."""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    from emergentintegrations.llm.chat import LlmChat, UserMessage # type: ignore
 
     # Build conversation context
     history_text = ""
-    for msg in conversation_history[-10:]:
+    for msg in conversation_history[-10:]: # type: ignore
         role = "Utilisateur" if msg["role"] == "user" else "Assistant"
         history_text += f"{role}: {msg['content']}\n"
 
@@ -1250,7 +1250,7 @@ async def process_chat_message(user_message: str, user_id: str, conversation_his
             # Get the AI to interpret the result
             interpret_chat = LlmChat(
                 api_key=EMERGENT_LLM_KEY,
-                session_id=f"orbit-chat-interpret-{uuid.uuid4().hex[:8]}",
+                session_id=f"orbit-chat-interpret-{uuid.uuid4().hex[:8]}", # type: ignore
                 system_message="Tu es l'assistant Orbit. L'utilisateur a pose une question et tu as appele un outil. Voici le resultat de l'outil. Reponds a l'utilisateur en francais de maniere claire et utile en utilisant le Markdown. Ne mentionne pas que tu as utilise un outil.",
             ).with_model("gemini", "gemini-2.5-flash")
 
@@ -1372,4 +1372,4 @@ async def chat_suggestions(request: Request):
             "action": "Demarre l'agent Orbit",
         })
 
-    return suggestions[:3]
+    return suggestions[:3] # type: ignore

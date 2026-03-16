@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --orbit-bg-main: #050505;
+  --orbit-bg-panel: #0A0E17;
+  --orbit-bg-surface: #111827;
+  --orbit-text-main: #F3F4F6;
+  --orbit-text-dim: #9CA3AF;
+  --orbit-border-main: #1F2937;
+}
+
+.light-theme {
+  --orbit-bg-main: #F9FAFB;
+  --orbit-bg-panel: #FFFFFF;
+  --orbit-bg-surface: #F3F4F6;
+  --orbit-text-main: #111827;
+  --orbit-text-dim: #4B5563;
+  --orbit-border-main: #E5E7EB;
+}
+
 * {
   margin: 0;
   padding: 0;

@@ -25,17 +25,17 @@ export default function ProofGallery({ api }) {
     <div data-testid="proof-gallery-page" className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-white">
+          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-orbit-text-main">
             Proof Gallery
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-mono">
+          <p className="text-sm text-orbit-text-dim mt-1 font-mono">
             Agent validation screenshots
           </p>
         </div>
         <button
           data-testid="refresh-screenshots-btn"
           onClick={fetchScreenshots}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-sm bg-[#1F2937] text-gray-300 hover:bg-[#374151] text-sm font-medium transition-colors border border-[#374151]"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-sm bg-orbit-bg-panel text-orbit-text-main hover:bg-orbit-bg-surface text-sm font-medium transition-colors border border-orbit-border-main"
         >
           <RefreshCw size={14} />
           Refresh
@@ -48,11 +48,11 @@ export default function ProofGallery({ api }) {
         </div>
       ) : screenshots.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-sm bg-orbit-panel border border-[#1F2937] flex items-center justify-center mb-4">
-            <Image size={28} className="text-gray-600" />
+          <div className="w-16 h-16 rounded-sm bg-orbit-bg-panel border border-orbit-border-main flex items-center justify-center mb-4 shadow-sm">
+            <Image size={28} className="text-orbit-text-dim/50" />
           </div>
-          <p className="text-gray-400 text-sm font-medium">No screenshots captured</p>
-          <p className="text-gray-600 text-xs mt-1 font-mono">
+          <p className="text-orbit-text-main/80 text-sm font-medium">No screenshots captured</p>
+          <p className="text-orbit-text-dim text-xs mt-1 font-mono">
             Trigger a sync to generate validation proofs
           </p>
         </div>
@@ -63,21 +63,21 @@ export default function ProofGallery({ api }) {
               key={ss.filename}
               data-testid={`screenshot-card-${i}`}
               onClick={() => setSelected(ss)}
-              className="bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden cursor-pointer group hover:border-[#374151] transition-colors animate-slide-up"
+              className="bg-orbit-bg-panel border border-orbit-border-main rounded-sm overflow-hidden cursor-pointer group hover:border-orbit-blue/50 transition-all hover:shadow-lg animate-slide-up"
               style={{ animationDelay: `${i * 40}ms` }}
             >
-              <div className="aspect-video bg-orbit-surface relative overflow-hidden">
+              <div className="aspect-video bg-orbit-bg-surface relative overflow-hidden">
                 <img
                   src={`${api}${ss.url}`}
                   alt={ss.filename}
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                  className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-orbit-panel to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-orbit-bg-panel/80 to-transparent opacity-60" />
               </div>
               <div className="p-3">
-                <p className="text-xs font-mono text-gray-400 truncate">{ss.filename}</p>
-                <div className="flex items-center gap-1 mt-1 text-[10px] font-mono text-gray-600">
+                <p className="text-xs font-mono text-orbit-text-main truncate">{ss.filename}</p>
+                <div className="flex items-center gap-1 mt-1 text-[10px] font-mono text-orbit-text-dim">
                   <Clock size={9} />
                   {new Date(ss.created).toLocaleString()}
                 </div>
@@ -93,11 +93,11 @@ export default function ProofGallery({ api }) {
           className="fixed inset-0 z-50 flex items-center justify-center"
         >
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelected(null)} />
-          <div className="relative max-w-4xl w-full mx-4 bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden animate-slide-up">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1F2937]">
+          <div className="relative max-w-4xl w-full mx-4 bg-orbit-bg-panel border border-orbit-border-main rounded-sm overflow-hidden animate-slide-up">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-orbit-border-main">
               <div>
-                <p className="text-sm font-mono text-gray-300">{selected.filename}</p>
-                <p className="text-[10px] font-mono text-gray-600">
+                <p className="text-sm font-mono text-orbit-text-main">{selected.filename}</p>
+                <p className="text-[10px] font-mono text-orbit-text-dim">
                   Captured: {new Date(selected.created).toLocaleString()}
                 </p>
               </div>
@@ -107,14 +107,14 @@ export default function ProofGallery({ api }) {
                   target="_blank"
                   rel="noreferrer"
                   data-testid="open-screenshot-external"
-                  className="p-1.5 rounded-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  className="p-1.5 rounded-sm text-orbit-text-dim hover:text-orbit-text-main transition-colors"
                 >
                   <ExternalLink size={14} />
                 </a>
                 <button
                   data-testid="close-screenshot-dialog"
                   onClick={() => setSelected(null)}
-                  className="p-1.5 rounded-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  className="p-1.5 rounded-sm text-orbit-text-dim hover:text-orbit-text-main transition-colors"
                 >
                   <X size={14} />
                 </button>

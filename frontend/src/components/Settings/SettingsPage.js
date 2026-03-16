@@ -47,24 +47,24 @@ export default function SettingsPage({ api }) {
   return (
     <div data-testid="settings-page" className="max-w-2xl space-y-6 animate-fade-in">
       <div>
-        <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-white">
+        <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-orbit-text-main">
           Settings
         </h1>
-        <p className="text-sm text-gray-500 mt-1 font-mono">
+        <p className="text-sm text-orbit-text-dim mt-1 font-mono">
           Agent configuration and control
         </p>
       </div>
 
-      <div className="bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1F2937]">
+      <div className="bg-orbit-bg-panel border border-orbit-border-main rounded-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-orbit-border-main">
           <Zap size={14} className="text-orbit-blue" />
-          <span className="text-xs font-mono uppercase tracking-wider text-gray-400">Agent Control</span>
+          <span className="text-xs font-mono uppercase tracking-wider text-orbit-text-dim">Agent Control</span>
         </div>
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-300">Agent Status</p>
-              <p className="text-xs font-mono text-gray-500 mt-0.5">
+              <p className="text-sm font-medium text-orbit-text-main">Agent Status</p>
+              <p className="text-xs font-mono text-orbit-text-dim mt-0.5">
                 {agentStatus?.running ? 'Agent is actively syncing properties' : 'Agent is idle'}
               </p>
             </div>
@@ -73,8 +73,8 @@ export default function SettingsPage({ api }) {
               onClick={toggleAgent}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
                 agentStatus?.running
-                  ? 'bg-red-900/30 text-red-400 border border-red-900/50 hover:bg-red-900/50'
-                  : 'bg-emerald-900/30 text-emerald-400 border border-emerald-900/50 hover:bg-emerald-900/50'
+                  ? 'bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500/20'
+                  : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20'
               }`}
             >
               {agentStatus?.running ? (
@@ -100,14 +100,14 @@ export default function SettingsPage({ api }) {
         </div>
       </div>
 
-      <div className="bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1F2937]">
-          <Settings size={14} className="text-gray-400" />
-          <span className="text-xs font-mono uppercase tracking-wider text-gray-400">Configuration</span>
+      <div className="bg-orbit-bg-panel border border-orbit-border-main rounded-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-orbit-border-main">
+          <Settings size={14} className="text-orbit-text-dim" />
+          <span className="text-xs font-mono uppercase tracking-wider text-orbit-text-dim">Configuration</span>
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-1.5">
+            <label className="block text-[10px] font-mono uppercase tracking-wider text-orbit-text-dim mb-1.5">
               Polling Interval (seconds)
             </label>
             <div className="flex items-center gap-3">
@@ -118,13 +118,13 @@ export default function SettingsPage({ api }) {
                 max="3600"
                 value={interval}
                 onChange={(e) => setInterval_(parseInt(e.target.value) || 900)}
-                className="w-32 px-3 py-2 bg-orbit-surface border border-[#1F2937] rounded-sm text-sm text-gray-200 font-mono focus:outline-none focus:border-orbit-blue transition-colors"
+                className="w-32 px-3 py-2 bg-orbit-bg-surface border border-orbit-border-main rounded-sm text-sm text-orbit-text-main font-mono focus:outline-none focus:border-orbit-blue transition-colors"
               />
-              <span className="text-xs text-gray-500 font-mono">
+              <span className="text-xs text-orbit-text-dim font-mono">
                 ({Math.floor(interval / 60)}m {interval % 60}s)
               </span>
             </div>
-            <p className="text-[10px] font-mono text-gray-600 mt-1">
+            <p className="text-[10px] font-mono text-orbit-text-dim/70 mt-1">
               How often the agent checks for calendar changes (min: 60s, max: 3600s)
             </p>
           </div>
@@ -141,28 +141,28 @@ export default function SettingsPage({ api }) {
         </div>
       </div>
 
-      <div className="bg-orbit-panel border border-[#1F2937] rounded-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1F2937]">
-          <span className="text-xs font-mono uppercase tracking-wider text-gray-400">System Info</span>
+      <div className="bg-orbit-bg-panel border border-orbit-border-main rounded-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-orbit-border-main">
+          <span className="text-xs font-mono uppercase tracking-wider text-orbit-text-dim">System Info</span>
         </div>
         <div className="p-4 space-y-2 font-mono text-xs">
           <div className="flex justify-between">
-            <span className="text-gray-500">Last Agent Run</span>
-            <span className="text-gray-300">
+            <span className="text-orbit-text-dim">Last Agent Run</span>
+            <span className="text-orbit-text-main">
               {agentStatus?.last_run ? new Date(agentStatus.last_run).toLocaleString() : 'Never'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Vision Model</span>
-            <span className="text-gray-300">Gemini 2.5 Flash</span>
+            <span className="text-orbit-text-dim">Vision Model</span>
+            <span className="text-orbit-text-main">Gemini 2.5 Flash</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Browser Engine</span>
-            <span className="text-gray-300">Playwright Chromium</span>
+            <span className="text-orbit-text-dim">Browser Engine</span>
+            <span className="text-orbit-text-main">Playwright Chromium</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Mock Pages</span>
-            <span className="text-gray-300">/storage/mock_pages/</span>
+            <span className="text-orbit-text-dim">Mock Pages</span>
+            <span className="text-orbit-text-main">/storage/mock_pages/</span>
           </div>
         </div>
       </div>

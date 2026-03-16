@@ -23,21 +23,21 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <aside data-testid="sidebar"
-      className={`flex flex-col border-r border-[#1F2937] bg-orbit-panel transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-[#1F2937]">
+      className={`flex flex-col border-r border-orbit-border-main bg-orbit-bg-panel transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
+      <div className="flex items-center gap-3 px-4 h-16 border-b border-orbit-border-main">
         <div className="w-8 h-8 rounded-sm bg-orbit-blue flex items-center justify-center flex-shrink-0">
           <Orbit size={18} className="text-white" />
         </div>
-        {!collapsed && <span className="font-heading text-xl font-bold tracking-wider uppercase text-white">Orbit</span>}
+        {!collapsed && <span className="font-heading text-xl font-bold tracking-wider uppercase text-orbit-text-main">Orbit</span>}
       </div>
 
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
         <div className="mb-2">
-          {!collapsed && <p className="px-3 mb-1 text-[9px] font-mono uppercase tracking-widest text-gray-600">Operations</p>}
+          {!collapsed && <p className="px-3 mb-1 text-[9px] font-mono uppercase tracking-widest text-orbit-text-dim">Operations</p>}
           {navItems.map(({ path, icon: Icon, label }) => (
             <NavLink key={path} to={path} data-testid={`nav-${label.toLowerCase().replace(/\s/g, '-')}`}
               className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-orbit-text-dim hover:text-orbit-text-main hover:bg-orbit-bg-surface'
               } ${collapsed ? 'justify-center' : ''}`}>
               <Icon size={16} className="flex-shrink-0" />
               {!collapsed && <span>{label}</span>}
@@ -47,10 +47,10 @@ export default function Sidebar({ collapsed, onToggle }) {
 
         {isAdmin && (
           <div className="mb-2">
-            {!collapsed && <p className="px-3 mb-1 mt-3 text-[9px] font-mono uppercase tracking-widest text-gray-600">Admin</p>}
+            {!collapsed && <p className="px-3 mb-1 mt-3 text-[9px] font-mono uppercase tracking-widest text-orbit-text-dim">Admin</p>}
             <NavLink to="/users" data-testid="nav-users"
               className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-orbit-text-dim hover:text-orbit-text-main hover:bg-orbit-bg-surface'
               } ${collapsed ? 'justify-center' : ''}`}>
               <Users size={16} className="flex-shrink-0" />
               {!collapsed && <span>Users</span>}
@@ -59,11 +59,11 @@ export default function Sidebar({ collapsed, onToggle }) {
         )}
 
         <div>
-          {!collapsed && <p className="px-3 mb-1 mt-3 text-[9px] font-mono uppercase tracking-widest text-gray-600">Account</p>}
+          {!collapsed && <p className="px-3 mb-1 mt-3 text-[9px] font-mono uppercase tracking-widest text-orbit-text-dim">Account</p>}
           {bottomItems.map(({ path, icon: Icon, label }) => (
             <NavLink key={path} to={path} data-testid={`nav-${label.toLowerCase().replace(/\s/g, '-')}`}
               className={({ isActive }) => `flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors ${
-                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                isActive ? 'bg-orbit-blue/10 text-orbit-blue border-l-2 border-orbit-blue' : 'text-orbit-text-dim hover:text-orbit-text-main hover:bg-orbit-bg-surface'
               } ${collapsed ? 'justify-center' : ''}`}>
               <Icon size={16} className="flex-shrink-0" />
               {!collapsed && <span>{label}</span>}
@@ -73,7 +73,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       </nav>
 
       {!collapsed && user && (
-        <div className="px-3 py-3 border-t border-[#1F2937]">
+        <div className="px-3 py-3 border-t border-orbit-border-main">
           <div className="flex items-center gap-2 mb-2">
             {user.picture ? (
               <img src={user.picture} alt="" className="w-6 h-6 rounded-full" />
@@ -83,19 +83,19 @@ export default function Sidebar({ collapsed, onToggle }) {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-300 truncate">{user.name}</p>
-              <p className="text-[9px] font-mono text-gray-600 truncate">{user.email}</p>
+              <p className="text-xs text-orbit-text-main truncate">{user.name}</p>
+              <p className="text-[9px] font-mono text-orbit-text-dim truncate">{user.email}</p>
             </div>
           </div>
           <button data-testid="logout-btn" onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs text-gray-500 hover:text-red-400 hover:bg-red-900/10 transition-colors">
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs text-orbit-text-dim hover:text-red-400 hover:bg-red-400/10 transition-colors">
             <LogOut size={12} /> Logout
           </button>
         </div>
       )}
 
       <button data-testid="sidebar-toggle" onClick={onToggle}
-        className="flex items-center justify-center h-10 border-t border-[#1F2937] text-gray-500 hover:text-gray-300 transition-colors">
+        className="flex items-center justify-center h-10 border-t border-orbit-border-main text-orbit-text-dim hover:text-orbit-text-main transition-colors">
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
     </aside>

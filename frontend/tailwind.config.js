@@ -15,6 +15,13 @@ module.exports = {
           warning: '#F59E0B',
           error: '#EF4444',
           info: '#3B82F6',
+          // Theme-aware tokens
+          'bg-main': 'var(--orbit-bg-main)',
+          'bg-panel': 'var(--orbit-bg-panel)',
+          'bg-surface': 'var(--orbit-bg-surface)',
+          'text-main': 'var(--orbit-text-main)',
+          'text-dim': 'var(--orbit-text-dim)',
+          'border-main': 'var(--orbit-border-main)',
         }
       },
       fontFamily: {

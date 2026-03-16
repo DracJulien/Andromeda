@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, Pause, Play, Trash2, Download } from 'lucide-react';
 
 const levelStyles = {
-  INFO: { color: 'text-blue-400', prefix: 'INF' },
-  WARN: { color: 'text-yellow-400', prefix: 'WRN' },
-  ERROR: { color: 'text-red-400', prefix: 'ERR' },
-  SUCCESS: { color: 'text-emerald-400', prefix: 'OK ' },
+  INFO: { color: 'text-blue-600', prefix: 'INF' },
+  WARN: { color: 'text-yellow-600', prefix: 'WRN' },
+  ERROR: { color: 'text-red-500', prefix: 'ERR' },
+  SUCCESS: { color: 'text-emerald-600', prefix: 'OK ' },
 };
 
 export default function LiveConsole({ api }) {
@@ -67,10 +67,10 @@ export default function LiveConsole({ api }) {
     <div data-testid="live-console-page" className="h-full flex flex-col animate-fade-in">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-white">
+          <h1 className="font-heading text-3xl font-bold tracking-tight uppercase text-orbit-text-main">
             Live Console
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-mono">
+          <p className="text-sm text-orbit-text-dim mt-1 font-mono">
             Real-time agent telemetry stream
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function LiveConsole({ api }) {
               className={`px-3 py-1.5 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-colors ${
                 filter === f
                   ? 'bg-orbit-blue/10 text-orbit-blue border border-orbit-blue/30'
-                  : 'text-gray-500 hover:text-gray-300 border border-transparent'
+                  : 'text-orbit-text-dim hover:text-orbit-text-main border border-transparent'
               }`}
             >
               {f}
@@ -92,20 +92,20 @@ export default function LiveConsole({ api }) {
         </div>
       </div>
 
-      <div className="flex-1 bg-black border border-[#1F2937] rounded-sm overflow-hidden flex flex-col min-h-0">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[#1F2937] bg-[#0A0E17] flex-shrink-0">
+      <div className="flex-1 bg-orbit-bg-main border border-orbit-border-main rounded-sm overflow-hidden flex flex-col min-h-0 shadow-inner">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-orbit-border-main bg-orbit-bg-panel flex-shrink-0">
           <div className="flex items-center gap-2">
             <Terminal size={12} className="text-orbit-blue" />
-            <span className="text-[10px] font-mono uppercase tracking-wider text-gray-500">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-orbit-text-dim">
               orbit://console
             </span>
-            <div className={`w-1.5 h-1.5 rounded-full ${paused ? 'bg-yellow-500' : 'bg-emerald-500 animate-pulse'}`} />
+            <div className={`w-1.5 h-1.5 rounded-full ${paused ? 'bg-yellow-500' : 'bg-orbit-success animate-pulse'}`} />
           </div>
           <div className="flex items-center gap-1">
             <button
               data-testid="toggle-pause-btn"
               onClick={() => setPaused(!paused)}
-              className="p-1 rounded-sm text-gray-500 hover:text-gray-300 transition-colors"
+              className="p-1 rounded-sm text-orbit-text-dim hover:text-orbit-text-main transition-colors"
               title={paused ? 'Resume' : 'Pause'}
             >
               {paused ? <Play size={12} /> : <Pause size={12} />}
@@ -113,7 +113,7 @@ export default function LiveConsole({ api }) {
             <button
               data-testid="export-logs-btn"
               onClick={exportLogs}
-              className="p-1 rounded-sm text-gray-500 hover:text-gray-300 transition-colors"
+              className="p-1 rounded-sm text-orbit-text-dim hover:text-orbit-text-main transition-colors"
               title="Export logs"
             >
               <Download size={12} />
@@ -121,7 +121,7 @@ export default function LiveConsole({ api }) {
             <button
               data-testid="clear-console-btn"
               onClick={() => setLogs([])}
-              className="p-1 rounded-sm text-gray-500 hover:text-gray-300 transition-colors"
+              className="p-1 rounded-sm text-orbit-text-dim hover:text-orbit-text-main transition-colors"
               title="Clear"
             >
               <Trash2 size={12} />
@@ -131,7 +131,7 @@ export default function LiveConsole({ api }) {
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 font-mono text-xs space-y-0.5">
           {filteredLogs.length === 0 ? (
-            <div className="text-gray-700 text-center py-8">
+            <div className="text-orbit-text-dim/50 text-center py-8 italic">
               Awaiting telemetry data...
             </div>
           ) : (
@@ -141,18 +141,18 @@ export default function LiveConsole({ api }) {
                 <div
                   key={log.log_id || i}
                   data-testid={`log-entry-${i}`}
-                  className="flex gap-2 py-0.5 hover:bg-white/[0.02] leading-relaxed"
+                  className="flex gap-2 py-0.5 hover:bg-orbit-bg-surface transition-colors leading-relaxed group"
                 >
-                  <span className="text-gray-700 flex-shrink-0 w-20">
+                  <span className="text-orbit-text-dim opacity-40 group-hover:opacity-70 flex-shrink-0 w-20">
                     {new Date(log.timestamp).toLocaleTimeString()}
                   </span>
                   <span className={`flex-shrink-0 w-8 font-bold ${style.color}`}>
                     {style.prefix}
                   </span>
-                  <span className="text-gray-500 flex-shrink-0">
+                  <span className="text-orbit-text-dim flex-shrink-0">
                     {log.action}
                   </span>
-                  <span className="text-gray-400">{log.message}</span>
+                  <span className="text-orbit-text-main/80 group-hover:text-orbit-text-main">{log.message}</span>
                 </div>
               );
             })
