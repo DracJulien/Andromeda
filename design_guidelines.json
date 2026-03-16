@@ -1,0 +1,180 @@
+{
+  "identity": {
+    "name": "Orbit",
+    "description": "Space-grade hotel automation platform",
+    "tone": "Precision, Control, High-Tech, Industrial",
+    "aesthetic": "NASA Command Center / Sci-Fi Dashboard",
+    "mode": "dark"
+  },
+  "typography": {
+    "fonts": {
+      "heading": {
+        "family": "Barlow Condensed, sans-serif",
+        "url": "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&display=swap",
+        "usage": "Page titles, Section headers, Metric values"
+      },
+      "body": {
+        "family": "Inter, sans-serif",
+        "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap",
+        "usage": "UI text, Labels, Navigation"
+      },
+      "mono": {
+        "family": "JetBrains Mono, monospace",
+        "url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap",
+        "usage": "Logs, IDs, Code snippets, Data tables"
+      }
+    },
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight uppercase",
+      "h2": "text-2xl font-semibold tracking-wide uppercase",
+      "h3": "text-xl font-medium tracking-normal",
+      "body": "text-base font-normal text-gray-400",
+      "caption": "text-xs font-medium uppercase tracking-wider text-gray-500"
+    }
+  },
+  "colors": {
+    "background": {
+      "main": "#050505",
+      "panel": "#0A0E17",
+      "surface": "#111827",
+      "overlay": "rgba(5, 5, 5, 0.8)"
+    },
+    "primary": {
+      "main": "#0070F3",
+      "hover": "#3291FF",
+      "dim": "rgba(0, 112, 243, 0.1)"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#3B82F6"
+    },
+    "text": {
+      "primary": "#F3F4F6",
+      "secondary": "#9CA3AF",
+      "muted": "#6B7280",
+      "accent": "#0070F3"
+    },
+    "border": {
+      "subtle": "#1F2937",
+      "default": "#374151",
+      "highlight": "#0070F3"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid rgba(255, 255, 255, 0.1)",
+    "glassmorphism": "backdrop-blur-md bg-opacity-90",
+    "shadows": {
+      "card": "0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3)",
+      "glow": "0 0 15px rgba(0, 112, 243, 0.3)"
+    },
+    "animations": {
+      "pulse": "animate-pulse",
+      "spin": "animate-spin",
+      "fade_in": "transition-opacity duration-300 ease-in-out"
+    }
+  },
+  "layout_strategy": {
+    "dashboard": "grid grid-cols-[240px_1fr] h-screen bg-[#050505] text-white overflow-hidden",
+    "sidebar": "flex flex-col border-r border-[#1F2937] bg-[#0A0E17] p-4",
+    "main_content": "flex flex-col h-full overflow-hidden relative",
+    "header": "h-16 border-b border-[#1F2937] flex items-center justify-between px-6 bg-[#050505]/80 backdrop-blur-sm z-10",
+    "grid_system": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 overflow-y-auto"
+  },
+  "components": {
+    "OrbitCard": {
+      "path": "src/components/ui/Card.js",
+      "styles": "bg-[#0A0E17] border border-[#1F2937] rounded-sm p-0 overflow-hidden relative group hover:border-[#374151] transition-colors"
+    },
+    "StatusBadge": {
+      "path": "src/components/ui/Badge.js",
+      "styles": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wider",
+      "variants": {
+        "success": "bg-green-900/30 text-green-400 border border-green-900",
+        "warning": "bg-yellow-900/30 text-yellow-400 border border-yellow-900",
+        "error": "bg-red-900/30 text-red-400 border border-red-900",
+        "neutral": "bg-gray-800 text-gray-400 border border-gray-700"
+      }
+    },
+    "LiveConsole": {
+      "path": "src/components/Console/LiveConsole.js",
+      "styles": "font-mono text-sm bg-black border border-[#1F2937] rounded-sm h-full flex flex-col overflow-hidden",
+      "log_styles": {
+        "info": "text-blue-400",
+        "warn": "text-yellow-400",
+        "error": "text-red-500",
+        "success": "text-green-400"
+      }
+    },
+    "Button": {
+      "path": "src/components/ui/Button.js",
+      "styles": "inline-flex items-center justify-center rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2",
+      "variants": {
+        "primary": "bg-[#0070F3] text-white hover:bg-[#0070F3]/90 shadow-[0_0_10px_rgba(0,112,243,0.3)]",
+        "secondary": "bg-[#1F2937] text-white hover:bg-[#374151] border border-[#374151]",
+        "ghost": "hover:bg-[#1F2937] hover:text-white",
+        "destructive": "bg-red-900 text-red-100 hover:bg-red-900/90"
+      }
+    }
+  },
+  "assets": {
+    "icons": {
+      "library": "lucide-react",
+      "required": ["Activity", "Server", "ShieldCheck", "AlertTriangle", "Terminal", "LayoutGrid", "Settings", "LogOut", "RefreshCw", "CheckCircle", "XCircle", "Clock"]
+    },
+    "images": {
+      "properties": [
+        {
+          "url": "https://images.unsplash.com/photo-1759264244764-2cb80f1a67bd?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Luxury Suite Bedroom",
+          "category": "property_thumbnail"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1766928210443-0be92ed5884a?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Modern City View Room",
+          "category": "property_thumbnail"
+        }
+      ],
+      "proofs": [
+        {
+          "url": "https://images.unsplash.com/photo-1691435828932-911a7801adfb?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Network Diagnostics Proof",
+          "category": "agent_proof"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1680992044138-ce4864c2b962?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "alt": "Server Status Proof",
+          "category": "agent_proof"
+        }
+      ]
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. Initialize React project if not present.",
+    "2. Install dependencies: 'lucide-react', 'clsx', 'tailwind-merge' (for dynamic classes).",
+    "3. Configure 'tailwind.config.js' to include the custom colors (accent-blue, space-black, panel-bg) defined in 'colors' section.",
+    "4. Add the Google Fonts imports to 'index.css' or 'App.css'.",
+    "5. Use 'Barlow Condensed' for all headings and 'JetBrains Mono' for all data/logs.",
+    "6. Ensure ALL backgrounds are dark (#050505 or #0A0E17). NO WHITE BACKGROUNDS.",
+    "7. Implement the 'OrbitDashboard' layout as the main wrapper.",
+    "8. Create reusable UI components (Button, Card, Badge) BEFORE building pages.",
+    "9. Use the provided image URLs for the property cards and proof gallery mockups.",
+    "10. Add 'data-testid' to all interactive elements for testing."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. In frontend design, this creates what users call the 'AI slop' aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN"
+  ]
+}
