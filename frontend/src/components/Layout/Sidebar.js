@@ -4,7 +4,7 @@ import { LayoutGrid, Building2, Terminal, Image, Settings, ChevronLeft, ChevronR
 import { useAuth } from '../Auth/AuthContext';
 
 const navItems = [
-  { path: '/', icon: LayoutGrid, label: 'Dashboard' },
+  { path: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
   { path: '/properties', icon: Building2, label: 'Properties' },
   { path: '/reservations', icon: CalendarDays, label: 'Reservations' },
   { path: '/console', icon: Terminal, label: 'Live Console' },

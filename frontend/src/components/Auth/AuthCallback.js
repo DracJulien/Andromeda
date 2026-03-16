@@ -30,7 +30,7 @@ export default function AuthCallback() {
         if (!res.ok) throw new Error('Session exchange failed');
         const data = await res.json();
         login(data.user, data.session_token);
-        navigate('/', { replace: true, state: { user: data.user } });
+        navigate('/dashboard', { replace: true });
       } catch {
         navigate('/login', { replace: true });
       }
