@@ -10,7 +10,9 @@ export default function PropertyGrid({ api }) {
 
   const fetchProperties = useCallback(async () => {
     try {
-      const res = await fetch(`${api}/api/properties`);
+      const token = localStorage.getItem('orbit_token');
+      const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch(`${api}/api/properties`, { credentials: 'include', headers: h });
       setProperties(await res.json());
     } catch {}
     setLoading(false);
@@ -23,19 +25,25 @@ export default function PropertyGrid({ api }) {
   }, [fetchProperties]);
 
   const handleSync = async (propertyId) => {
-    await fetch(`${api}/api/properties/${propertyId}/sync`, { method: 'POST' });
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+    await fetch(`${api}/api/properties/${propertyId}/sync`, { method: 'POST', credentials: 'include', headers: h });
     fetchProperties();
   };
 
   const handleDelete = async (propertyId) => {
-    await fetch(`${api}/api/properties/${propertyId}`, { method: 'DELETE' });
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+    await fetch(`${api}/api/properties/${propertyId}`, { method: 'DELETE', credentials: 'include', headers: h });
     fetchProperties();
   };
 
   const handleAdd = async (data) => {
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
     await fetch(`${api}/api/properties`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', credentials: 'include',
+      headers: h,
       body: JSON.stringify(data),
     });
     setShowAdd(false);

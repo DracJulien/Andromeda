@@ -17,7 +17,9 @@ export default function LiveConsole({ api }) {
 
   useEffect(() => {
     // Load initial logs
-    fetch(`${api}/api/logs?limit=50`)
+    const token = localStorage.getItem('orbit_token');
+    const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+    fetch(`${api}/api/logs?limit=50`, { credentials: 'include', headers: h })
       .then((r) => r.json())
       .then((data) => setLogs(data.reverse()))
       .catch(() => {});

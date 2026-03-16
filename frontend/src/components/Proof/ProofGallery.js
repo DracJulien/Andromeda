@@ -9,7 +9,9 @@ export default function ProofGallery({ api }) {
   const fetchScreenshots = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${api}/api/screenshots`);
+      const token = localStorage.getItem('orbit_token');
+      const h = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch(`${api}/api/screenshots`, { credentials: 'include', headers: h });
       setScreenshots(await res.json());
     } catch {}
     setLoading(false);
